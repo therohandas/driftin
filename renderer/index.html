@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driftin Spotify Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── Custom Frameless Titlebar ────────────────────────────── -->
+  <header class="titlebar">
+    <div class="titlebar-drag-region"></div>
+    <div class="titlebar-logo">
+      <img src="icon.png" class="titlebar-logo-img" alt="Driftin Logo">
+      <span>Driftin</span>
+    </div>
+    <span id="titlebar-clock" class="titlebar-clock"></span>
+    <div class="titlebar-controls">
+      <button id="titlebar-min" class="titlebar-btn" aria-label="Minimize">
+        <svg viewBox="0 0 10 1" width="10" height="1"><line x1="0" y1="0.5" x2="10" y2="0.5" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+      <button id="titlebar-max" class="titlebar-btn" aria-label="Maximize">
+        <svg viewBox="0 0 10 10" width="10" height="10"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+      <button id="titlebar-close" class="titlebar-btn close-btn" aria-label="Close">
+        <svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 0 L10 10 M10 0 L0 10" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Dynamic Moving Gradient Background ──────────────────────── -->
+  <div id="dynamic-bg" class="dynamic-bg">
+    <div class="gradient-layer g1"></div>
+    <div class="gradient-layer g2"></div>
+    <div class="gradient-layer g3"></div>
+    <div class="bg-noise"></div>
+  </div>
+
+  <!-- ── Login Screen ───────────────────────────────────────── -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card glass-panel">
+      <div class="login-icon-ring">
+        <img src="login_logo.png" class="login-logo-img" alt="Driftin Logo">
+      </div>
+      <span class="login-eyebrow">DRIFTIN</span>
+      <h1 class="login-title">Your Spotify, Reimagined</h1>
+      <p class="login-subtitle">Connect your Spotify account to experience beautiful, synced lyrics and colors.</p>
+      
+      <button id="btn-login" class="login-btn">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="spotify-logo">
+          <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+        </svg>
+        Connect Spotify
+      </button>
+
+      <button id="btn-open-settings-login" class="settings-toggle-btn-small">
+        Configure Client ID
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Main Player Dashboard ────────────────────────────────── -->
+  <div id="player-screen" class="player-screen hidden">
+    <div class="dashboard-container">
+      
+      <!-- ── Left panel: Vinyl Player Visualizer ────────────────── -->
+      <section class="visualizer-panel glass-panel">
+        <div class="vinyl-wrapper">
+          <!-- Record -->
+          <div class="vinyl-disc" id="vinyl-disc">
+            <div class="vinyl-grooves"></div>
+            <div class="vinyl-label">
+              <img id="album-art" src="" alt="Album Art" crossorigin="anonymous">
+              <div class="vinyl-label-fallback" id="vinyl-fallback">
+                <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5">
+                  <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Static Highlights (rendered on top so they don't spin) -->
+          <div class="vinyl-glare"></div>
+          <div class="vinyl-spindle"></div>
+
+          <!-- Tone arm (rendered on top of everything) -->
+          <div class="vinyl-tonearm" id="vinyl-tonearm">
+            <svg viewBox="0 0 100 250" fill="none" class="tonearm-svg">
+              <path d="M50 20 L50 80 L35 150 L35 210" stroke="#888" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="50" cy="20" r="12" fill="#333" stroke="#555" stroke-width="2"/>
+              <rect x="25" y="210" width="20" height="25" rx="3" fill="#222" stroke="#444" stroke-width="1.5"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="visualizer-meta">
+          <div class="device-badge-wrapper">
+            <div class="device-badge" id="device-badge">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+              </svg>
+              <span id="active-device-name">No Device Active</span>
+            </div>
+            <div class="devices-dropdown hidden" id="devices-dropdown">
+              <div class="devices-dropdown-header">Select Device</div>
+              <ul class="devices-list" id="devices-list">
+                <li class="device-item loading">Loading...</li>
+              </ul>
+            </div>
+          </div>
+          <button id="btn-logout" class="icon-btn-text" title="Disconnect Spotify">
+            Disconnect
+          </button>
+        </div>
+      </section>
+
+      <!-- ── Center/Right panel: Main Controls & Lyrics ──────────── -->
+      <main class="control-panel">
+        
+        <!-- Track Details Card -->
+        <div class="track-details glass-panel">
+          <div class="details-text">
+            <h1 id="track-name" class="track-title">Not Playing</h1>
+            <h2 id="artist-name" class="track-artist">Start playback on Spotify</h2>
+            <p id="album-name" class="track-album"></p>
+          </div>
+          <div class="details-actions">
+            <!-- Liked Songs (Heart) Button -->
+            <button id="btn-like-main" class="icon-btn btn-like" title="Add to Liked Songs">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" class="icon-heart">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </button>
+
+            <!-- Search Toggle -->
+            <button id="btn-search-toggle" class="icon-btn" title="Toggle Search">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+
+            <!-- Library/Playlist Toggle -->
+            <button id="btn-library-toggle" class="icon-btn" title="Toggle Library">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+            </button>
+
+            <!-- Queue Toggle -->
+            <button id="btn-queue-toggle" class="icon-btn" title="Toggle Queue">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+            </button>
+
+            <!-- Miniplayer Toggle -->
+            <button id="btn-miniplayer-toggle" class="icon-btn" title="Compact View">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="21" y1="9" x2="3" y2="9"/>
+              </svg>
+            </button>
+
+            <!-- Manual Refresh Details Button -->
+            <button id="btn-refresh-main" class="icon-btn" title="Refresh Song Details">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-refresh">
+                <path d="M23 4v6h-6"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+            </button>
+
+            <!-- Fullscreen Lyrics Toggle Button -->
+            <button id="btn-fullscreen-toggle" class="icon-btn" title="Fullscreen Lyrics">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </button>
+
+            <!-- Settings Toggle -->
+            <button id="btn-settings-toggle" class="icon-btn" title="Settings">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabbed Area: Lyrics OR Queue OR Search OR Library OR Settings -->
+        <div class="content-tabs glass-panel">
+          
+          <!-- Lyrics View (Active by Default) -->
+          <div id="tab-lyrics" class="tab-content active">
+            <div class="lyrics-header">
+              <span>Synced Lyrics</span>
+              <span id="lyrics-source" class="lyrics-source-tag">LRCLIB</span>
+            </div>
+            <div id="lyrics-scroll-container" class="lyrics-scroll-container">
+              <div id="lyrics-loading" class="lyrics-status-msg hidden">
+                <div class="spinner"></div>
+                Searching for lyrics...
+              </div>
+              <div id="lyrics-empty" class="lyrics-status-msg">
+                No lyrics loaded. Start playing a song!
+              </div>
+              <div id="lyrics-not-found" class="lyrics-status-msg hidden">
+                <div class="lyrics-empty-graphic">
+                  <svg viewBox="0 0 100 100" class="writing-quill-svg">
+                    <path d="M25,15 L65,15 L75,25 L75,85 L25,85 Z" class="paper-sheet" />
+                    <line x1="32" y1="30" x2="55" y2="30" class="paper-line" />
+                    <line x1="32" y1="42" x2="68" y2="42" class="paper-line" />
+                    <line x1="32" y1="54" x2="68" y2="54" class="paper-line" />
+                    <line x1="32" y1="66" x2="50" y2="66" class="paper-line" />
+                    <g class="quill-feather-group">
+                      <path d="M52,62 C52,62 50,55 58,45 C66,35 78,12 85,8 C82,15 76,28 66,38 C56,48 53,53 53,53 L51,60 Z" class="quill-body" />
+                      <path d="M52,62 C50,60 49,57 51,55 L53,53" class="quill-nib" />
+                    </g>
+                    <circle cx="50" cy="63" r="1.5" class="ink-drop" />
+                    <circle cx="53" cy="65" r="1" class="ink-drop-2" />
+                  </svg>
+                </div>
+                <div class="lyrics-empty-text">We are still writing this song...</div>
+                <div class="lyrics-empty-sub">No synced lyrics available.</div>
+              </div>
+              <div id="lyrics-container" class="lyrics-container">
+                <!-- Sync lyrics lines dynamically added here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Search View -->
+          <div id="tab-search" class="tab-content">
+            <div class="search-header">
+              <div class="search-input-wrapper">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="search-input" placeholder="Search tracks, artists, albums...">
+                <button id="btn-clear-search" class="clear-search-btn hidden">&times;</button>
+              </div>
+            </div>
+            <div class="search-results-container">
+              <div id="search-initial" class="lyrics-status-msg">
+                Find your favorite music on Spotify
+              </div>
+              <div id="search-loading" class="lyrics-status-msg hidden">
+                <div class="spinner"></div>
+                Searching...
+              </div>
+              <div id="search-empty" class="lyrics-status-msg hidden">
+                No results found
+              </div>
+              <div id="search-results" class="search-results-list hidden">
+                <!-- Search tracks / albums will be rendered here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Library/Playlists View -->
+          <div id="tab-library" class="tab-content">
+            <div class="library-header">
+              <span id="library-title">Your Playlists</span>
+              <button id="btn-library-back" class="icon-btn-small hidden" title="Back to Playlists">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+                </svg>
+              </button>
+            </div>
+            <div class="library-list-container">
+              <div id="library-loading" class="lyrics-status-msg hidden">
+                <div class="spinner"></div>
+                Loading playlists...
+              </div>
+              <div id="library-empty" class="lyrics-status-msg hidden">
+                No playlists found
+              </div>
+              <!-- Playlists Grid View -->
+              <div id="playlists-grid" class="playlists-grid">
+                <!-- Playlist items populated here -->
+              </div>
+              <!-- Playlist Tracks Detail View (hidden by default) -->
+              <div id="playlist-detail" class="playlist-detail hidden">
+                <div class="playlist-meta-header">
+                  <img id="playlist-detail-art" src="" class="playlist-detail-art" alt="Playlist Art">
+                  <div class="playlist-detail-info">
+                    <h3 id="playlist-detail-name">Playlist Name</h3>
+                    <p id="playlist-detail-count">0 tracks</p>
+                    <button id="btn-play-playlist" class="play-playlist-btn">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Play
+                    </button>
+                  </div>
+                </div>
+                <div class="playlist-tracks-scroll">
+                  <ul id="playlist-tracks-list" class="playlist-tracks-list">
+                    <!-- Tracks populated here -->
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Queue View -->
+          <div id="tab-queue" class="tab-content">
+            <div class="queue-header">
+              <span>Play Queue</span>
+              <button id="btn-refresh-queue" class="icon-btn-small" title="Refresh Queue">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+              </button>
+            </div>
+            <div class="queue-list-container">
+              <div id="queue-empty" class="lyrics-status-msg">
+                Queue is empty or unavailable
+              </div>
+              <ul id="queue-list" class="queue-list">
+                <!-- Queue items loaded here -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Settings View -->
+          <div id="tab-settings" class="tab-content">
+            <div class="settings-header">
+              <span>Application Settings</span>
+            </div>
+            <div class="settings-form">
+              <!-- Card 1: Spotify Integration -->
+              <div class="settings-card">
+                <h3 class="settings-card-title">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                  Spotify Connection
+                </h3>
+                <div class="form-group">
+                  <label for="input-client-id">Spotify Client ID</label>
+                  <input type="text" id="input-client-id" placeholder="Enter Spotify Client ID">
+                  <small>Get a Client ID from the <a href="https://developer.spotify.com/dashboard" target="_blank">Spotify Developer Dashboard</a>.</small>
+                </div>
+                <div class="form-group">
+                  <label>Redirect URI to whitelist in Spotify dashboard:</label>
+                  <div class="code-box">driftin://spotify-auth</div>
+                </div>
+              </div>
+
+              <!-- Card 2: App Behavior -->
+              <div class="settings-card">
+                <h3 class="settings-card-title">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  Playback & Behavior
+                </h3>
+                <div class="settings-grid">
+                  <div class="settings-toggle-group">
+                    <label class="switch-container">
+                      <div class="switch-control">
+                        <input type="checkbox" id="setting-notifications" checked>
+                        <span class="switch-slider"></span>
+                      </div>
+                      <span class="switch-label">Desktop Notifications</span>
+                    </label>
+                    <small class="setting-desc">Show toast notifications on song changes.</small>
+                  </div>
+                  
+                  <div class="settings-toggle-group">
+                    <label class="switch-container">
+                      <div class="switch-control">
+                        <input type="checkbox" id="setting-always-on-top">
+                        <span class="switch-slider"></span>
+                      </div>
+                      <span class="switch-label">Always on Top</span>
+                    </label>
+                    <small class="setting-desc">Keep player windows above other apps.</small>
+                  </div>
+
+                  <div class="settings-toggle-group">
+                    <label class="switch-container">
+                      <div class="switch-control">
+                        <input type="checkbox" id="setting-startup">
+                        <span class="switch-slider"></span>
+                      </div>
+                      <span class="switch-label">Launch on Startup</span>
+                    </label>
+                    <small class="setting-desc">Start Driftin automatically when Windows boots.</small>
+                  </div>
+
+                  <div class="settings-toggle-group">
+                    <label class="switch-container">
+                      <div class="switch-control">
+                        <input type="checkbox" id="setting-vinyl-spin" checked>
+                        <span class="switch-slider"></span>
+                      </div>
+                      <span class="switch-label">Vinyl Spin Animation</span>
+                    </label>
+                    <small class="setting-desc">Enable dynamic spinning effect for the vinyl visualizer.</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 3: Customization & Appearance -->
+              <div class="settings-card">
+                <h3 class="settings-card-title">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.7255 3.09032 17.1962 4.85857 19C5.03345 19.1749 5.0999 19.4293 5.0223 19.6646C4.85857 20.1646 4.7255 20.7255 4.7255 21.2745C4.7255 21.6745 5.051 22 5.451 22H12Z"/><circle cx="7.5" cy="10.5" r="1.5" fill="currentColor"/><circle cx="11.5" cy="7.5" r="1.5" fill="currentColor"/><circle cx="16.5" cy="9.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="14.5" r="1.5" fill="currentColor"/></svg>
+                  Player Customization
+                </h3>
+
+                <div class="form-group">
+                  <label for="setting-theme-preset">Theme Accent Preset</label>
+                  <select id="setting-theme-preset" class="settings-select">
+                    <option value="dynamic">Dynamic (Match Album Art)</option>
+                    <option value="spotify">Spotify Green</option>
+                    <option value="sakura">Sakura Pink</option>
+                    <option value="cyberpunk">Cyberpunk Purple</option>
+                    <option value="dark">Deep Space Black</option>
+                  </select>
+                  <small class="setting-desc">Choose between dynamic color matching and static color themes.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-lyrics-size">Lyrics Font Size</label>
+                  <select id="setting-lyrics-size" class="settings-select">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                    <option value="xl">Extra Large</option>
+                  </select>
+                  <small class="setting-desc">Adjust the size of the synced lyrics display text.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-lyrics-offset">Lyrics Sync Offset (<span id="offset-val">0.0s</span>)</label>
+                  <div class="slider-control-wrapper">
+                    <input type="range" id="setting-lyrics-offset" min="-5" max="5" step="0.1" value="0">
+                  </div>
+                  <small class="setting-desc">Adjust dynamic timing alignment of synced lyrics (positive values show lyrics sooner, negative values show them later).</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-mini-opacity">Miniplayer Idle Opacity (<span id="opacity-val">70%</span>)</label>
+                  <div class="slider-control-wrapper">
+                    <input type="range" id="setting-mini-opacity" min="0.2" max="1" step="0.05" value="0.7">
+                  </div>
+                  <small class="setting-desc">Adjust transparency of the miniplayer window when it is not hovered.</small>
+                </div>
+              </div>
+
+
+
+              <div class="form-actions">
+                <button id="btn-save-settings" class="login-btn-small">Close Settings</button>
+                <button id="btn-reset-settings" class="reset-btn-small">Reset to Default</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Playback Controller Block -->
+        <div class="playback-controls glass-panel">
+          
+          <!-- Progress slider -->
+          <div class="timeline-container">
+            <span id="time-current" class="time-label">0:00</span>
+            <div class="timeline-slider-wrapper" id="timeline-slider-wrapper">
+              <input type="range" id="timeline-slider" min="0" max="100" value="0">
+              <div class="timeline-progress" id="timeline-progress"></div>
+            </div>
+            <span id="time-total" class="time-label">0:00</span>
+          </div>
+
+          <!-- Primary Control Buttons -->
+          <div class="control-row">
+            <div class="left-controls">
+              <!-- Shuffle -->
+              <button id="btn-shuffle" class="control-btn" title="Shuffle">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
+                  <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+                  <line x1="4" y1="4" x2="9" y2="9"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="center-controls">
+              <!-- Previous -->
+              <button id="btn-prev" class="control-btn medium" title="Previous">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                </svg>
+              </button>
+              <!-- Play/Pause -->
+              <button id="btn-play-pause" class="control-btn large play-pause-btn" title="Play">
+                <svg id="icon-play" viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg id="icon-pause" viewBox="0 0 24 24" width="30" height="30" fill="currentColor" class="hidden">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+              </button>
+              <!-- Next -->
+              <button id="btn-next" class="control-btn medium" title="Next">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="right-controls">
+              <!-- Repeat -->
+              <button id="btn-repeat" class="control-btn" title="Repeat">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                  <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+              </button>
+              
+              <!-- Volume Control -->
+              <div class="volume-container">
+                <button id="btn-volume-mute" class="control-btn mute-btn" title="Mute">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="vol-icon">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  </svg>
+                </button>
+                <div class="volume-slider-wrapper">
+                  <input type="range" id="volume-slider" min="0" max="100" value="70">
+                  <div class="volume-progress" id="volume-progress"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+    </div>
+
+    <!-- ── Mini Player View ───────────────────────────────────── -->
+    <div id="miniplayer-view" class="miniplayer-view hidden">
+      <div class="miniplayer-art-wrap">
+        <img id="mini-album-art" src="" alt="Album Art">
+        <div class="mini-vinyl-grooves"></div>
+      </div>
+      <div class="miniplayer-info">
+        <div id="mini-track-name" class="mini-track-title">Not Playing</div>
+        <div id="mini-artist-name" class="mini-track-artist">Start playback on Spotify</div>
+        <div class="miniplayer-controls">
+          <button id="btn-mini-prev" class="mini-control-btn" title="Previous">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          </button>
+          <button id="btn-mini-play-pause" class="mini-control-btn play-pause" title="Play">
+            <svg id="icon-mini-play" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="icon-mini-pause" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" class="hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+          <button id="btn-mini-next" class="mini-control-btn" title="Next">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+          </button>
+        </div>
+      </div>
+      <button id="btn-mini-expand" class="mini-expand-btn" title="Expand Player">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Full Screen Lyrics View ────────────────────────────────── -->
+  <div id="fullscreen-lyrics-overlay" class="fullscreen-lyrics-overlay hidden">
+    <!-- Drifting Animated Watercolor Gradient bubbles -->
+    <div class="fs-backdrop">
+      <div class="fs-bubble b1"></div>
+      <div class="fs-bubble b2"></div>
+      <div class="fs-bubble b3"></div>
+      <div class="fs-bubble b4"></div>
+    </div>
+    
+    <!-- Top Header bar -->
+    <header class="fs-header">
+      <div class="fs-header-title">Now Playing</div>
+      <button id="btn-fs-exit" class="fs-exit-btn" title="Exit Fullscreen">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="10" y1="14" x2="3" y2="21"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="fs-content-container">
+      <!-- Left Column: Album Art & Details -->
+      <div class="fs-art-column">
+        <div class="fs-art-wrapper">
+          <img id="fs-album-art" src="" alt="Album Art">
+        </div>
+        <div class="fs-track-details">
+          <h1 id="fs-track-title" class="fs-track-title-text">Not Playing</h1>
+          <h2 id="fs-artist-name" class="fs-artist-text">Start playback on Spotify</h2>
+        </div>
+      </div>
+
+      <!-- Right Column: Scrolling Lyrics -->
+      <div class="fs-lyrics-column">
+        <div id="fs-lyrics-scroll-container" class="fs-lyrics-scroll-container">
+          <div id="fs-lyrics-container" class="fs-lyrics-container">
+            <!-- Lyrics lines rendered dynamically here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Playback controls at the bottom center -->
+    <div class="fs-playback-bar">
+      <button id="btn-fs-prev" class="fs-control-btn" title="Previous">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+        </svg>
+      </button>
+      <button id="btn-fs-play-pause" class="fs-control-btn play-pause" title="Play">
+        <svg id="icon-fs-play" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg id="icon-fs-pause" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" class="hidden">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </button>
+      <button id="btn-fs-next" class="fs-control-btn" title="Next">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driftin Miniplayer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="miniplayer.css">
+</head>
+<body>
+
+  <!-- Custom Titlebar Drag Region -->
+  <header class="mini-titlebar">
+    <div class="mini-titlebar-drag-region">
+      <div class="drag-handle-dots">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+    <button id="btn-mini-close" class="mini-titlebar-btn" aria-label="Exit Miniplayer">
+      <svg viewBox="0 0 10 10" width="10" height="10">
+        <path d="M0 0 L10 10 M10 0 L0 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Ambient background glow -->
+  <div id="dynamic-bg" class="dynamic-bg">
+    <div class="gradient-layer g1"></div>
+    <div class="gradient-layer g2"></div>
+    <div class="bg-noise"></div>
+  </div>
+
+  <div class="miniplayer-container">
+    <!-- Album Art wrapper with hover controls overlay -->
+    <div class="art-container">
+      <img id="mini-album-art" src="" alt="Album Art">
+      <div class="art-fallback" id="mini-art-fallback">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5">
+          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+      </div>
+      <!-- Hover Overlay Controls -->
+      <div class="controls-overlay">
+        <button id="btn-prev" class="overlay-btn" title="Previous">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+          </svg>
+        </button>
+        <button id="btn-play-pause" class="overlay-btn play-pause-btn" title="Play">
+          <svg id="icon-play" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <svg id="icon-pause" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" class="hidden">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+        </button>
+        <button id="btn-next" class="overlay-btn" title="Next">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Track Details at the bottom -->
+    <div class="details-row">
+      <div class="details-text">
+        <div id="track-name" class="track-title">Not Playing</div>
+        <div id="artist-name" class="track-artist">Start playback on Spotify</div>
+      </div>
+      <button id="btn-like" class="like-btn" title="Add to Liked Songs">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-plus">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" class="icon-checkmark hidden">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="miniplayer.js" type="module"></script>
+</body>
+</html>

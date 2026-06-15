@@ -1,0 +1,48 @@
+{
+  "name": "driftin-desktop",
+  "version": "1.0.0",
+  "description": "A premium Spotify player experience for Windows",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . Driftin --platform=win32 --arch=x64 --out=dist --icon=icon.ico --overwrite"
+  },
+  "keywords": [
+    "spotify",
+    "music",
+    "desktop",
+    "electron"
+  ],
+  "author": "Daydreamin Team",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^30.0.1",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.daydreamin.driftin",
+    "productName": "Driftin",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Driftin"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*"
+    ]
+  }
+}
