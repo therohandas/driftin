@@ -1,6 +1,11 @@
 const { app, BrowserWindow, ipcMain, shell, globalShortcut, Tray, Menu } = require('electron');
 const path = require('path');
 
+// Isolate development user data/cache from production instance to prevent file locks
+if (!app.isPackaged) {
+  app.setPath('userData', path.join(app.getPath('appData'), 'driftin-desktop-dev'));
+}
+
 let mainWindow;
 let tray = null;
 let isQuitting = false;
