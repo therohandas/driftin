@@ -155,7 +155,6 @@ body:hover .mini-titlebar {
 }
 
 body:hover .dynamic-bg {
-  border-color: color-mix(in srgb, var(--accent-color) 30%, rgba(255, 255, 255, 0.08));
   box-shadow: 0 0 15px color-mix(in srgb, var(--accent-color) 15%, transparent);
 }
 
@@ -195,7 +194,6 @@ body:hover .dynamic-bg {
   backdrop-filter: blur(24px) saturate(160%);
   overflow: hidden;
   transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), backdrop-filter 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
 }
 
