@@ -8,6 +8,9 @@
 
 Driftin is a premium, custom-styled companion Spotify player for Windows. Built using Electron, vanilla CSS, and the Spotify Web API, it replaces the standard web client layouts with a striking glassmorphic interface that responds dynamically to your music.
 
+> [!IMPORTANT]
+> **Spotify Premium Required:** Due to Spotify API developer constraints, active playback control features (such as play, pause, skip, seek, and volume adjustments) require a **Spotify Premium** account.
+
 Whether you need a full-screen ambient lyrics display or a floating miniplayer widget on your desktop, Driftin offers a distraction-free and interactive listening experience.
 
 ---
