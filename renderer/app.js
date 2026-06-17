@@ -28,6 +28,8 @@ let isTogglingLikeMain = false;
 let searchTimeout = null;
 let currentPlaylist = null;
 let hasEndedTriggered = false;
+let activeRetryId = 0;
+let prefetchTimeout = null;
 
 
 // ── DOM Elements ──────────────────────────────────────────────
@@ -233,13 +235,11 @@ async function init() {
   
 
   
-  if (auth.isAuthenticated) {
-    const token = await auth.getValidToken();
-    if (token) {
-      spotifyApi.setAccessToken(token);
-      showPlayer();
-      return;
-    }
+  const token = await auth.getValidToken();
+  if (token) {
+    spotifyApi.setAccessToken(token);
+    showPlayer();
+    return;
   }
   showLogin();
 }
@@ -607,6 +607,38 @@ async function pollPlaybackState() {
   }
 }
 
+async function pollPlaybackStateWithRetry(expectedChange = true, maxRetries = 5, delayMs = 800) {
+  const oldTrackId = currentTrackId;
+  activeRetryId++;
+  const currentRetryId = activeRetryId;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    // Wait for the delay
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+    
+    // If a newer retry loop has started, abort this one!
+    if (currentRetryId !== activeRetryId) return;
+    
+    try {
+      const state = await spotifyApi.getPlayerState();
+      if (state && state.item) {
+        // If we expected a track change and it changed, or if we just want a valid state
+        if (!expectedChange || state.item.id !== oldTrackId) {
+          handlePlaybackState(state);
+          return; // Success!
+        }
+      }
+    } catch (err) {
+      console.warn(`Retry poll failed (attempt ${i + 1}/${maxRetries}):`, err);
+    }
+  }
+  
+  // Final fallback: do a regular poll
+  if (currentRetryId === activeRetryId) {
+    pollPlaybackState();
+  }
+}
+
 function handleNoPlayback() {
   isPlaying = false;
   trackNameEl.textContent = 'Not Playing';
@@ -777,6 +809,10 @@ function handlePlaybackState(state) {
     const firstArtistName = (item.artists && item.artists.length > 0) ? item.artists[0].name : currentArtistName;
     loadLyricsForTrack(currentTrackName, firstArtistName, albumName, item.duration_ms || 0);
 
+    // Prefetch next track lyrics in background after a 3s delay
+    if (prefetchTimeout) clearTimeout(prefetchTimeout);
+    prefetchTimeout = setTimeout(prefetchNextTrackLyrics, 3000);
+
     // Check if liked in main window
     checkIfTrackLikedMain(item.id);
 
@@ -806,6 +842,11 @@ function handlePlaybackState(state) {
     iconFsPlay.classList.remove('hidden');
     iconFsPause.classList.add('hidden');
     btnFsPlayPause.title = 'Play';
+  }
+
+  // Sync timeline UI with player state (if user is not dragging)
+  if (!isDraggingTimeline) {
+    updateTimelineUI();
   }
 }
 
@@ -923,6 +964,30 @@ async function loadLyricsForTrack(track, artist, album, duration) {
   }
 }
 
+async function prefetchNextTrackLyrics() {
+  try {
+    const queue = await spotifyApi.getQueue();
+    if (queue && queue.queue && queue.queue.length > 0) {
+      // Find the first valid track in the queue list
+      const nextTrack = queue.queue.find(item => item !== null && item !== undefined);
+      if (nextTrack) {
+        const trackName = nextTrack.name;
+        const artistName = (nextTrack.artists && nextTrack.artists.length > 0) ? nextTrack.artists[0].name : '';
+        const albumName = nextTrack.album ? nextTrack.album.name : '';
+        const durationMs = nextTrack.duration_ms;
+        
+        if (trackName && artistName) {
+          console.log(`[Lyrics] Prefetching in background for next track: ${trackName} - ${artistName}`);
+          // Fetch and cache it so it loads instantly when player transitions
+          fetchLyrics(trackName, artistName, albumName, durationMs);
+        }
+      }
+    }
+  } catch (err) {
+    console.debug('[Lyrics] Silent prefetch skip:', err.message);
+  }
+}
+
 function syncLyricsScroll(currentPositionMs) {
   if (parsedLyrics.length === 0) return;
   
@@ -1037,8 +1102,8 @@ async function refreshQueue() {
           try {
             if (item.uri) {
               await spotifyApi.playTrack(item.uri);
-              // Poll playback state immediately to update player
-              setTimeout(pollPlaybackState, 300);
+              // Poll playback state with retry to handle API eventual consistency
+              pollPlaybackStateWithRetry(true, 5, 800);
             }
           } catch (err) {
             console.error('Failed to play track from queue:', err);
@@ -1161,8 +1226,8 @@ btnPlayPause.addEventListener('click', async () => {
 btnNext.addEventListener('click', async () => {
   try {
     await spotifyApi.nextTrack();
-    // Prompt a quick poll
-    setTimeout(pollPlaybackState, 300);
+    // Poll playback state with retry to handle API eventual consistency
+    pollPlaybackStateWithRetry(true, 5, 800);
   } catch (err) {
     console.error(err);
   }
@@ -1180,7 +1245,7 @@ btnPrev.addEventListener('click', async () => {
       lastUpdateTimestamp = Date.now();
     } else {
       await spotifyApi.prevTrack();
-      setTimeout(pollPlaybackState, 300);
+      pollPlaybackStateWithRetry(true, 5, 800);
     }
   } catch (err) {
     console.error(err);
@@ -1219,7 +1284,7 @@ btnRepeat.addEventListener('click', async () => {
     localStorage.setItem('dd_repeat_state', newState);
     
     // UI state updates in poll state
-    setTimeout(pollPlaybackState, 300);
+    pollPlaybackStateWithRetry(false, 4, 800);
   } catch (err) {
     console.error(err);
   }
@@ -1378,7 +1443,7 @@ async function loadDevicesList() {
           devicesDropdown.classList.add('hidden');
           try {
             await spotifyApi.transferPlayback(device.id, true);
-            setTimeout(pollPlaybackState, 500);
+            pollPlaybackStateWithRetry(false, 4, 800);
           } catch (err) {
             console.error('Failed to transfer playback:', err);
             alert(`Could not switch to device: ${err.message}`);
@@ -1566,8 +1631,8 @@ function renderSearchResults(tracks) {
         if (track.uri) {
           // Play track
           await spotifyApi.playTrack(track.uri);
-          // Poll immediately
-          setTimeout(pollPlaybackState, 300);
+          // Poll with retry to handle API latency
+          pollPlaybackStateWithRetry(true, 5, 800);
         }
       } catch (err) {
         console.error('Failed to play searched track:', err);
@@ -1642,7 +1707,7 @@ function renderPlaylists(playlists) {
       e.stopPropagation(); // don't open details
       try {
         await spotifyApi.playContext(playlist.uri);
-        setTimeout(pollPlaybackState, 300);
+        pollPlaybackStateWithRetry(true, 5, 800);
       } catch (err) {
         console.error('Failed to play playlist context:', err);
         alert(`Failed to play: ${err.message}. (Note: Active Spotify Premium device is required)`);
@@ -1679,7 +1744,7 @@ async function openPlaylistDetails(playlist) {
   btnPlayPlaylist.onclick = async () => {
     try {
       await spotifyApi.playContext(playlist.uri);
-      setTimeout(pollPlaybackState, 300);
+      pollPlaybackStateWithRetry(true, 5, 800);
     } catch (err) {
       console.error('Failed to play playlist:', err);
       alert(`Could not play playlist: ${err.message}`);
@@ -1713,7 +1778,7 @@ async function openPlaylistDetails(playlist) {
           try {
             // Play playlist starting at this track!
             await spotifyApi.playContext(playlist.uri, track.uri);
-            setTimeout(pollPlaybackState, 300);
+            pollPlaybackStateWithRetry(true, 5, 800);
           } catch (err) {
             console.error('Failed to play track inside playlist context:', err);
             alert(`Could not play track: ${err.message}`);
@@ -1747,6 +1812,7 @@ btnLibraryBack.addEventListener('click', showPlaylistsGrid);
 function openFullscreen() {
   fullscreenLyricsOverlay.classList.remove('hidden');
   document.body.classList.add('fullscreen-mode-active');
+  window.windowControls.setFullScreen(true);
   
   fsAlbumArt.src = albumArt.src;
   fsTrackTitle.textContent = trackNameEl.textContent;
@@ -1777,6 +1843,7 @@ function openFullscreen() {
 function closeFullscreen() {
   fullscreenLyricsOverlay.classList.add('hidden');
   document.body.classList.remove('fullscreen-mode-active');
+  window.windowControls.setFullScreen(false);
 }
 
 btnFullscreenToggle.addEventListener('click', openFullscreen);
@@ -1785,6 +1852,13 @@ btnFsExit.addEventListener('click', closeFullscreen);
 btnFsPrev.addEventListener('click', () => btnPrev.click());
 btnFsPlayPause.addEventListener('click', () => btnPlayPause.click());
 btnFsNext.addEventListener('click', () => btnNext.click());
+
+// Close fullscreen on Escape key press
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !fullscreenLyricsOverlay.classList.contains('hidden')) {
+    closeFullscreen();
+  }
+});
 
 // ── Desktop Toast Notifications ────────────────────────────────
 

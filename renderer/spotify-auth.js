@@ -1,7 +1,7 @@
 // Spotify Authorization Code Flow with PKCE in Electron
 // Exposes login and token management methods
 
-const DEFAULT_CLIENT_ID = 'cb33ea11ac5d43698241686c51c9e307';
+const DEFAULT_CLIENT_ID = '';
 const SCOPES = [
   'user-read-playback-state',
   'user-modify-playback-state',

@@ -7,7 +7,8 @@ contextBridge.exposeInMainWorld('windowControls', {
   toggleMiniPlayer: (isMini) => ipcRenderer.send('window-toggle-miniplayer', isMini),
   onMiniplayerClosed: (callback) => ipcRenderer.on('miniplayer-closed', (e) => callback()),
   setAlwaysOnTop: (value) => ipcRenderer.send('window-set-always-on-top', value),
-  setLoginItem: (value) => ipcRenderer.send('app-set-login-item', value)
+  setLoginItem: (value) => ipcRenderer.send('app-set-login-item', value),
+  setFullScreen: (value) => ipcRenderer.send('window-set-fullscreen', value)
 });
 
 contextBridge.exposeInMainWorld('spotify', {

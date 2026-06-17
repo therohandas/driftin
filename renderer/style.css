@@ -2694,3 +2694,13 @@ body.mini-player-active .player-screen {
   }
 }
 
+/* Hide custom titlebar in OS Fullscreen mode */
+.fullscreen-mode-active .titlebar {
+  display: none !important;
+}
+
+.fullscreen-mode-active .player-screen {
+  height: 100vh !important;
+  padding: 40px !important;
+}
+

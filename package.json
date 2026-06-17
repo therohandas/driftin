@@ -13,7 +13,7 @@
     "desktop",
     "electron"
   ],
-  "author": "Daydreamin Team",
+  "author": "Driftin Team",
   "license": "ISC",
   "devDependencies": {
     "electron": "^30.0.1",
@@ -21,7 +21,7 @@
     "electron-packager": "^17.1.2"
   },
   "build": {
-    "appId": "com.daydreamin.driftin",
+    "appId": "com.driftin.desktop",
     "productName": "Driftin",
     "directories": {
       "output": "dist"

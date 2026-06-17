@@ -93,7 +93,7 @@ function createMiniWindow() {
 
 app.whenReady().then(() => {
   if (process.platform === 'win32') {
-    app.setAppUserModelId('com.daydreamin.driftin');
+    app.setAppUserModelId('com.driftin.desktop');
   }
   createMainWindow();
   createTray();
@@ -133,6 +133,11 @@ app.on('window-all-closed', () => {
 ipcMain.on('window-minimize', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win) win.minimize();
+});
+
+ipcMain.on('window-set-fullscreen', (event, value) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) win.setFullScreen(value);
 });
 
 ipcMain.on('window-maximize', (event) => {
